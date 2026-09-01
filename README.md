@@ -1,7 +1,10 @@
 # ExtratoPixelNexo — Leitor de Extrato & Gestor Financeiro
 
-Aplicativo de leitura de extratos bancários (OFX, CSV, PDF, imagens e texto),
-categorização automática e análise de gastos com IA.
+Aplicativo de leitura de extratos bancários (OFX, CSV e texto colado),
+categorização automática e análise de gastos.
+
+**Todo o processamento acontece no aparelho** — nenhum dado bancário sai do
+dispositivo e o app não depende de nenhum serviço externo.
 
 Roda como **PWA** (instalável pelo navegador) e como **APK Android** (via Capacitor).
 
@@ -11,7 +14,6 @@ Roda como **PWA** (instalável pelo navegador) e como **APK Android** (via Capac
 
 ```bash
 npm install
-# defina GEMINI_API_KEY em .env (veja .env.example)
 npm run dev
 ```
 
@@ -33,19 +35,7 @@ cd android && ./gradlew assembleDebug
 # APK em android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## Backend e IA no APK
-
-As funções de IA (`/api/parse-statement`, `/api/analyze-finances`, `/api/chat-advisor`)
-rodam no servidor Express (`server.ts`), que precisa da variável `GEMINI_API_KEY`.
-
-| Ambiente | Como as chamadas são resolvidas |
-| --- | --- |
-| PWA / web | Mesma origem do app — nada a configurar |
-| APK (Capacitor) | Precisa de `VITE_API_BASE_URL` apontando para o servidor hospedado |
-
-Defina `VITE_API_BASE_URL` no build (ou o secret `API_BASE_URL` no repositório,
-que o workflow injeta automaticamente). Sem isso, o APK funciona normalmente para
-importação **OFX/CSV** e controle financeiro, mas as funções de IA ficam indisponíveis.
+## Comandos
 
 | Comando | O que faz |
 | --- | --- |

@@ -3,7 +3,6 @@ import { Header } from './components/Header';
 import { FinancialKPIs } from './components/FinancialKPIs';
 import { ChartsAndAnalytics } from './components/ChartsAndAnalytics';
 import { TransactionTable } from './components/TransactionTable';
-import { AIAdvisorTab } from './components/AIAdvisorTab';
 import { BudgetPlanner } from './components/BudgetPlanner';
 import { StatementUploader } from './components/StatementUploader';
 import { AddTransactionModal } from './components/AddTransactionModal';
@@ -31,7 +30,7 @@ export default function App() {
   const { hideValues } = usePrivacy();
 
   // Navigation
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'ai_advisor' | 'budget'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'budget'>('dashboard');
   const [categoryFilterFromChart, setCategoryFilterFromChart] = useState<CategoryKey | null>(null);
 
   // Modals
@@ -212,7 +211,7 @@ export default function App() {
                 Importe seu Extrato Bancário
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
-                Carregue arquivos de qualquer banco brasileiro em <strong className="text-indigo-600 font-semibold">OFX</strong> ou <strong className="text-indigo-600 font-semibold">CSV</strong>, ou envie <strong className="text-purple-600 font-semibold">PDFs e prints</strong> para leitura instantânea com IA.
+                Carregue arquivos de qualquer banco brasileiro em <strong className="text-indigo-600 font-semibold">OFX</strong> ou <strong className="text-indigo-600 font-semibold">CSV</strong>, ou <strong className="text-indigo-600 font-semibold">cole as linhas</strong> do extrato. Tudo processado no seu aparelho.
               </p>
             </div>
 
@@ -295,12 +294,7 @@ export default function App() {
               />
             )}
 
-            {/* Tab 3: AI Advisor & Diagnostics */}
-            {activeTab === 'ai_advisor' && (
-              <AIAdvisorTab transactions={transactions} budgets={budgets} />
-            )}
-
-            {/* Tab 4: Budget & Planning */}
+            {/* Tab 3: Budget & Planning */}
             {activeTab === 'budget' && (
               <BudgetPlanner
                 transactions={transactions}

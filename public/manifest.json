@@ -2,7 +2,7 @@
   "id": "/",
   "name": "ExtratoPixelNexo - Leitor de Extrato & Gestor Financeiro",
   "short_name": "ExtratoNexo",
-  "description": "Leitura de extratos bancários (OFX, CSV, PDF, imagens e texto), categorização automática e análise de gastos com IA.",
+  "description": "Leitura de extratos bancários (OFX, CSV e texto), categorização automática e análise de gastos — tudo processado no seu aparelho.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -10,7 +10,10 @@
   "background_color": "#F8FAFC",
   "theme_color": "#4F46E5",
   "lang": "pt-BR",
-  "categories": ["finance", "productivity"],
+  "categories": [
+    "finance",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/icon-192.png",

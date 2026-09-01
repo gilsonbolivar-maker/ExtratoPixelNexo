@@ -3,9 +3,7 @@ import {
   UploadCloud,
   FileSpreadsheet,
   FileText,
-  Image as ImageIcon,
   Clipboard,
-  Sparkles,
   AlertCircle,
   CheckCircle2,
   X,
@@ -16,7 +14,6 @@ import {
 } from 'lucide-react';
 import { Transaction, StatementSummary } from '../types';
 import { parseOFXContent, parseCSVContent, SAMPLE_STATEMENTS } from '../utils/statementParsers';
-import { apiUrl } from '../utils/api';
 
 interface StatementUploaderProps {
   isOpen: boolean;
@@ -29,7 +26,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
   onClose,
   onImportSuccess,
 }) => {
-  const [activeUploadTab, setActiveUploadTab] = useState<'file' | 'document' | 'paste' | 'samples'>('file');
+  const [activeUploadTab, setActiveUploadTab] = useState<'file' | 'paste' | 'samples'>('file');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -38,7 +35,6 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
   const [bankHint, setBankHint] = useState('');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const docInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
 
@@ -64,88 +60,20 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
         setStatusMessage('Processando colunas do arquivo CSV...');
         const result = parseCSVContent(text, bankHint || file.name.replace(/\.[^/.]+$/, ''));
         if (result.transactions.length === 0) {
-          // If CSV parser didn't find headers, try AI server-side fallback
-          setStatusMessage('Acionando leitor de extrato inteligente com IA...');
-          await parseWithAI({ textContent: text, bankHint });
-        } else {
-          onImportSuccess(result.transactions, result.summary);
-          onClose();
+          throw new Error(
+            'Nenhuma transação reconhecida no CSV. Confira se o arquivo tem colunas de data, descrição e valor.'
+          );
         }
+        onImportSuccess(result.transactions, result.summary);
+        onClose();
       } else {
-        // Unknown format, try AI
-        setStatusMessage('Processando documento com IA Gemini...');
-        await parseWithAI({ textContent: text, bankHint });
+        throw new Error(
+          `Formato "${extension || 'desconhecido'}" não suportado. Exporte o extrato em OFX ou CSV, ou use a aba "Colar Texto".`
+        );
       }
     } catch (err: any) {
       console.error('Error handling file:', err);
-      setErrorMessage(err.message || 'Erro ao processar arquivo. Tente outro formato ou use o leitor de IA.');
-    } finally {
-      setIsProcessing(false);
-      setStatusMessage(null);
-    }
-  };
-
-  // Process PDF or Image with Gemini Multimodal API
-  const handleDocumentFile = async (file: File) => {
-    setIsProcessing(true);
-    setErrorMessage(null);
-    setStatusMessage(`Enviando ${file.name} para análise multimodal de extrato...`);
-
-    try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64Data = reader.result as string;
-        await parseWithAI({
-          base64Data,
-          mimeType: file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg'),
-          bankHint: bankHint || file.name,
-        });
-      };
-      reader.onerror = () => {
-        throw new Error('Falha ao ler arquivo do disco.');
-      };
-      reader.readAsDataURL(file);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao ler documento.');
-      setIsProcessing(false);
-      setStatusMessage(null);
-    }
-  };
-
-  // Call Server-side Gemini API
-  const parseWithAI = async (payload: { textContent?: string; base64Data?: string; mimeType?: string; bankHint?: string }) => {
-    try {
-      setStatusMessage('A Inteligência Artificial está identificando valores, datas e categorias...');
-      const response = await fetch(apiUrl('/api/parse-statement'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao consultar serviço de inteligência artificial.');
-      }
-
-      const data = await response.json();
-      if (!data.transactions || data.transactions.length === 0) {
-        throw new Error('A IA não conseguiu identificar transações válidas no conteúdo fornecido.');
-      }
-
-      const summary: StatementSummary = {
-        bankName: data.bankName || bankHint || 'Extrato IA',
-        accountNumber: data.accountNumber,
-        currency: data.currency || 'BRL',
-        finalBalance: data.finalBalance,
-        startDate: data.transactions[data.transactions.length - 1]?.date,
-        endDate: data.transactions[0]?.date,
-      };
-
-      onImportSuccess(data.transactions, summary);
-      onClose();
-    } catch (error: any) {
-      console.error('AI parse error:', error);
-      setErrorMessage(error.message || 'Falha no processamento com IA.');
+      setErrorMessage(err.message || 'Erro ao processar arquivo. Tente exportar o extrato em OFX ou CSV.');
     } finally {
       setIsProcessing(false);
       setStatusMessage(null);
@@ -162,15 +90,14 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
     setStatusMessage('Lendo linhas de texto coladas...');
 
     try {
-      // First try local CSV parser
       const csvResult = parseCSVContent(pastedText, bankHint || 'Extrato Colado');
-      if (csvResult.transactions.length >= 2) {
-        onImportSuccess(csvResult.transactions, csvResult.summary);
-        onClose();
-      } else {
-        // Fallback to Gemini
-        await parseWithAI({ textContent: pastedText, bankHint });
+      if (csvResult.transactions.length < 2) {
+        throw new Error(
+          'Não foi possível reconhecer as linhas coladas. Use uma linha por transação, com data, descrição e valor.'
+        );
       }
+      onImportSuccess(csvResult.transactions, csvResult.summary);
+      onClose();
     } catch (err: any) {
       setErrorMessage(err.message || 'Erro ao interpretar texto colado.');
     } finally {
@@ -206,7 +133,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
             </div>
             <div>
               <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">Leitura de Extrato Bancário</h2>
-              <p className="text-xs text-slate-500">Importe seu extrato em OFX, CSV, PDF, fotos ou texto</p>
+              <p className="text-xs text-slate-500">Importe seu extrato em OFX, CSV ou texto</p>
             </div>
           </div>
           <button
@@ -229,18 +156,6 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
           >
             <FileSpreadsheet className="w-4 h-4" />
             OFX & CSV (Bancos)
-          </button>
-
-          <button
-            onClick={() => { setActiveUploadTab('document'); setErrorMessage(null); }}
-            className={`pb-2.5 px-3 border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              activeUploadTab === 'document'
-                ? 'border-indigo-600 text-indigo-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Sparkles className="w-4 h-4 text-indigo-600" />
-            PDF / Foto com IA
           </button>
 
           <button
@@ -284,10 +199,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
           {/* Processing Loading state */}
           {isProcessing ? (
             <div className="py-12 flex flex-col items-center justify-center space-y-3 text-center">
-              <div className="relative">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                <Sparkles className="w-4 h-4 text-indigo-500 absolute -top-1 -right-1 animate-pulse" />
-              </div>
+              <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
               <div className="space-y-1">
                 <p className="text-sm font-bold text-slate-800">Analisando movimentações bancárias...</p>
                 <p className="text-xs text-slate-500">{statusMessage || 'Aguarde um instante.'}</p>
@@ -353,45 +265,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
                 </div>
               )}
 
-              {/* TAB 2: PDF / Foto com IA */}
-              {activeUploadTab === 'document' && (
-                <div className="space-y-4">
-                  <div
-                    onClick={() => docInputRef.current?.click()}
-                    className="border-2 border-dashed border-slate-300 hover:border-indigo-500 hover:bg-slate-50 rounded-xl p-8 text-center cursor-pointer transition flex flex-col items-center justify-center space-y-2.5 bg-slate-50/50"
-                  >
-                    <div className="p-3 rounded-full bg-purple-50 text-purple-600">
-                      <ImageIcon className="w-7 h-7" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">
-                        Carregar <span className="text-purple-600">PDF</span> ou <span className="text-purple-600">Print / Foto do Extrato</span>
-                      </p>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        A IA Gemini lê imagens do app do seu banco, faturas em PDF e comprovantes
-                      </p>
-                    </div>
-                    <input
-                      ref={docInputRef}
-                      type="file"
-                      accept="application/pdf,image/png,image/jpeg,image/webp,image/heic"
-                      className="hidden"
-                      onChange={(e) => {
-                        if (e.target.files?.[0]) handleDocumentFile(e.target.files[0]);
-                      }}
-                    />
-                  </div>
-
-                  <div className="text-xs text-slate-600 bg-indigo-50/60 p-3 rounded-lg border border-indigo-100 flex items-start gap-2">
-                    <Sparkles className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
-                    <span>
-                      Dica: Você pode tirar um print da tela de transações do seu aplicativo bancário ou exportar a fatura em PDF. A IA identificará cada linha de débito e crédito automaticamente.
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 3: Colar Texto */}
+              {/* TAB 2: Colar Texto */}
               {activeUploadTab === 'paste' && (
                 <form onSubmit={handlePasteSubmit} className="space-y-3">
                   <div>
@@ -432,7 +306,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
                 </form>
               )}
 
-              {/* TAB 4: Extratos Prontos (Samples) */}
+              {/* TAB 3: Extratos Prontos (Samples) */}
               {activeUploadTab === 'samples' && (
                 <div className="space-y-3">
                   <p className="text-xs text-slate-500">

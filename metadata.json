@@ -1,6 +1,6 @@
 {
   "name": "ExtratoPixelNexo",
-  "description": "Aplicativo inteligente para leitura de extratos bancários (OFX, CSV, PDF, imagens e texto), controle financeiro, categorização automática e análise de gastos com IA.",
+  "description": "Leitura de extratos bancários (OFX, CSV e texto), controle financeiro, categorização automática e análise de gastos — tudo processado no seu aparelho.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": []
 }

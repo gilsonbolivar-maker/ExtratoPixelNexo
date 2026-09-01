@@ -1,5 +1,5 @@
 import React from 'react';
-import { Wallet, UploadCloud, Sparkles, RefreshCw, Download, Plus, FileText, CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
+import { Wallet, UploadCloud, ShieldCheck, RefreshCw, Download, Plus, FileText, CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
 import { StatementSummary } from '../types';
 import { usePrivacy } from '../context/PrivacyContext';
 import { ThemeSelector } from './ThemeSelector';
@@ -12,8 +12,8 @@ interface HeaderProps {
   onOpenAddModal: () => void;
   onReset: () => void;
   onExportJSON: () => void;
-  activeTab: 'dashboard' | 'transactions' | 'ai_advisor' | 'budget';
-  setActiveTab: (tab: 'dashboard' | 'transactions' | 'ai_advisor' | 'budget') => void;
+  activeTab: 'dashboard' | 'transactions' | 'budget';
+  setActiveTab: (tab: 'dashboard' | 'transactions' | 'budget') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,9 +43,9 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight truncate">
                   Extrato<span className="text-indigo-600">PixelNexo</span>
                 </h1>
-                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-indigo-700 border border-indigo-100">
-                  <Sparkles className="w-3 h-3 mr-1 text-indigo-600" />
-                  Processado via IA
+                <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  <ShieldCheck className="w-3 h-3 mr-1 text-emerald-600" />
+                  100% offline
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium uppercase tracking-wider truncate">
@@ -207,19 +207,6 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <FileText className="w-3.5 h-3.5" />
             Transações ({transactionCount})
-          </button>
-
-          <button
-            id="nav-tab-advisor"
-            onClick={() => setActiveTab('ai_advisor')}
-            className={`px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer flex-shrink-0 min-h-[36px] ${
-              activeTab === 'ai_advisor'
-                ? 'bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-2xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-            }`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
-            Diagnóstico IA
           </button>
 
           <button
