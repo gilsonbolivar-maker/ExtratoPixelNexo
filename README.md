@@ -7,7 +7,7 @@ Roda como **PWA** (instalável pelo navegador) e como **APK Android** (via Capac
 
 ## Rodar localmente
 
-**Pré-requisitos:** Node.js 20+
+**Pré-requisitos:** Node.js 22+
 
 ```bash
 npm install
@@ -24,7 +24,7 @@ npm run dev
 
 ### Opção B — Localmente
 
-**Pré-requisitos:** Node.js 20+, JDK 21, Android SDK (via Android Studio).
+**Pré-requisitos:** Node.js 22+, JDK 21, Android SDK (via Android Studio).
 
 ```bash
 npm install
