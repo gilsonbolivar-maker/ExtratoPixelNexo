@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --bg-card-muted: #f1f5f9;
+    --bg-hover: #f8fafc;
+    --border-main: #e2e8f0;
+    --border-light: #f1f5f9;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-sub: #94a3b8;
+    --accent-color: #4f46e5;
+    --accent-hover: #4338ca;
+    --header-bg: #ffffff;
+  }
+
+  /* Dark Theme */
+  html.theme-dark {
+    --bg-page: #0b0f17;
+    --bg-card: #131b28;
+    --bg-card-muted: #1c2738;
+    --bg-hover: #1e2c3f;
+    --border-main: #243447;
+    --border-light: #1c2838;
+    --text-main: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-sub: #64748b;
+    --accent-color: #6366f1;
+    --accent-hover: #4f46e5;
+    --header-bg: #101724;
+  }
+
+  /* Pixel Nexo Midnight Theme (Special Purple & Gold) */
+  html.theme-midnight {
+    --bg-page: #150422;
+    --bg-card: #230836;
+    --bg-card-muted: #300c49;
+    --bg-hover: #3d105e;
+    --border-main: #4a146e;
+    --border-light: #380e54;
+    --text-main: #ffffff;
+    --text-muted: #c4b5fd;
+    --text-sub: #a78bfa;
+    --accent-color: #ffd000;
+    --accent-hover: #e6bc00;
+    --header-bg: #1c062c;
+  }
+
+  /* Emerald Financial Theme */
+  html.theme-emerald {
+    --bg-page: #031711;
+    --bg-card: #08241b;
+    --bg-card-muted: #0d3327;
+    --bg-hover: #134434;
+    --border-main: #16533f;
+    --border-light: #0d382b;
+    --text-main: #ecfdf5;
+    --text-muted: #a7f3d0;
+    --text-sub: #6ee7b7;
+    --accent-color: #10b981;
+    --accent-hover: #059669;
+    --header-bg: #051e16;
+  }
+
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-main);
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Global theming helper classes */
+.theme-page-bg {
+  background-color: var(--bg-page);
+}
+
+.theme-card-bg {
+  background-color: var(--bg-card);
+  border-color: var(--border-main);
+}
+
+.theme-card-muted {
+  background-color: var(--bg-card-muted);
+}
+
+.theme-border {
+  border-color: var(--border-main);
+}
+
+.theme-text-main {
+  color: var(--text-main);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+/* Dark mode generic overrides */
+html.dark .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+html.dark .bg-slate-50 {
+  background-color: var(--bg-card-muted) !important;
+}
+
+html.dark .bg-slate-100 {
+  background-color: var(--bg-hover) !important;
+}
+
+html.dark .border-slate-200,
+html.dark .border-slate-100,
+html.dark .border-slate-300 {
+  border-color: var(--border-main) !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800 {
+  color: var(--text-main) !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600 {
+  color: var(--text-muted) !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: var(--text-sub) !important;
+}
+
+html.dark header {
+  background-color: var(--header-bg) !important;
+  border-color: var(--border-main) !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: var(--bg-card-muted) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-main) !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: var(--text-sub) !important;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.35);
+}
+
+/* ========================================== */
+/* PIXEL NEXO FOOTER SIGNATURE                */
+/* ========================================== */
+.pixel-nexo-footer {
+  background-color: #2B0843;
+  color: #FFFFFF;
+  border-top: 1px solid #581C87;
+  padding: 16px 24px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 13px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.pixel-nexo-footer * {
+  box-sizing: border-box;
+}
+.pixel-nexo-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.pixel-nexo-left, .pixel-nexo-right {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.pixel-nexo-tagline {
+  background-color: #581C8740;
+  border: 1px solid #FFD00040;
+  color: #FFD000;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pixel-nexo-link {
+  color: #C4B5FD;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pixel-nexo-link:hover {
+  color: #FFD000;
+  text-decoration: underline;
+}
+@media (max-width: 768px) {
+  .pixel-nexo-container {
+    flex-direction: column;
+    text-align: center;
+    justify-content: center;
+  }
+  .pixel-nexo-left, .pixel-nexo-right {
+    justify-content: center;
+  }
+}
