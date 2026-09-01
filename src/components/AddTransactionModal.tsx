@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, Plus, DollarSign, Calendar, Tag, CreditCard, Building2 } from 'lucide-react';
-import { Transaction, CategoryKey, PaymentMethod, TransactionType } from '../types';
+import { Transaction, BankAccount, CategoryKey, PaymentMethod, TransactionType } from '../types';
 import { CATEGORIES } from '../utils/categories';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  /** Bancos já existentes, sugeridos no campo de banco. */
+  banks: BankAccount[];
+  /** Banco pré-selecionado (o escopo aberto no momento). */
+  defaultBank?: string | null;
 }
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   isOpen,
   onClose,
   onAddTransaction,
+  banks,
+  defaultBank,
 }) => {
   const [description, setDescription] = useState('');
   const [amountStr, setAmountStr] = useState('');
@@ -20,8 +26,13 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   const [category, setCategory] = useState<CategoryKey>('alimentacao');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
-  const [bankName, setBankName] = useState('Manual');
+  const [bankName, setBankName] = useState(defaultBank || 'Manual');
   const [isRecurring, setIsRecurring] = useState(false);
+
+  // Ao abrir, já vem com o banco que a pessoa está vendo
+  useEffect(() => {
+    if (isOpen) setBankName(defaultBank || 'Manual');
+  }, [isOpen, defaultBank]);
 
   if (!isOpen) return null;
 
@@ -170,6 +181,31 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 <option value="outro">Outro</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="input-bank-name" className="block text-slate-700 font-semibold mb-1 text-xs">
+              Banco / Conta
+            </label>
+            <div className="relative">
+              <Building2 className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                id="input-bank-name"
+                list="bank-suggestions"
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+                placeholder="Escolha um banco ou digite um novo"
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-3 py-2 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-indigo-500 focus:bg-white text-xs"
+              />
+              <datalist id="bank-suggestions">
+                {banks.map((bank) => (
+                  <option key={bank.name} value={bank.name} />
+                ))}
+              </datalist>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-1">
+              Digite um nome novo para criar outro banco.
+            </p>
           </div>
 
           {/* Recurring checkbox */}

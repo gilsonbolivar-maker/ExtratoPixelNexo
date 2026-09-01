@@ -57,6 +57,12 @@ export interface StatementSummary {
   currency: string;
 }
 
+/** Um banco/conta presente nos lançamentos, com quantos lançamentos tem. */
+export interface BankAccount {
+  name: string;
+  count: number;
+}
+
 export interface Budget {
   category: CategoryKey;
   limit: number;

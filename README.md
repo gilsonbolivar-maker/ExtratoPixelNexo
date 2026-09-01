@@ -8,6 +8,22 @@ dispositivo e o app não depende de nenhum serviço externo.
 
 Roda como **PWA** (instalável pelo navegador) e como **APK Android** (via Capacitor).
 
+## Como os dados se organizam
+
+Cada lançamento pertence a um **banco**. Importar um extrato **soma** ao que já
+existe (lançamentos repetidos são ignorados), então dá para juntar quantos bancos
+quiser.
+
+O seletor no topo alterna entre:
+
+| Escopo | O que mostra |
+| --- | --- |
+| **Meu consolidado** | Tudo junto, independente de banco — a visão da pessoa |
+| **Um banco** | Só os lançamentos daquele banco |
+
+O escopo vale para os KPIs, gráficos, transações e orçamento. No menu `⋮` dá para
+exportar um backup, remover só o banco aberto ou limpar tudo.
+
 ## Rodar localmente
 
 **Pré-requisitos:** Node.js 22+

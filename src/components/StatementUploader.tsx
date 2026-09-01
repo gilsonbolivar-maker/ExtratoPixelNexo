@@ -2,18 +2,16 @@ import React, { useState, useRef } from 'react';
 import {
   UploadCloud,
   FileSpreadsheet,
-  FileText,
   Clipboard,
   AlertCircle,
   CheckCircle2,
   X,
   Loader2,
   Building2,
-  Zap,
   ArrowRight
 } from 'lucide-react';
 import { Transaction, StatementSummary } from '../types';
-import { parseOFXContent, parseCSVContent, SAMPLE_STATEMENTS } from '../utils/statementParsers';
+import { parseOFXContent, parseCSVContent } from '../utils/statementParsers';
 
 interface StatementUploaderProps {
   isOpen: boolean;
@@ -26,7 +24,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
   onClose,
   onImportSuccess,
 }) => {
-  const [activeUploadTab, setActiveUploadTab] = useState<'file' | 'paste' | 'samples'>('file');
+  const [activeUploadTab, setActiveUploadTab] = useState<'file' | 'paste'>('file');
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -91,7 +89,7 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
 
     try {
       const csvResult = parseCSVContent(pastedText, bankHint || 'Extrato Colado');
-      if (csvResult.transactions.length < 2) {
+      if (csvResult.transactions.length === 0) {
         throw new Error(
           'Não foi possível reconhecer as linhas coladas. Use uma linha por transação, com data, descrição e valor.'
         );
@@ -103,22 +101,6 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
     } finally {
       setIsProcessing(false);
       setStatusMessage(null);
-    }
-  };
-
-  // Load sample statement
-  const handleSelectSample = (sampleId: string) => {
-    const sample = SAMPLE_STATEMENTS.find((s) => s.id === sampleId);
-    if (sample) {
-      const txs = sample.getTransactions();
-      const summary: StatementSummary = {
-        bankName: sample.bank,
-        currency: 'BRL',
-        startDate: txs[txs.length - 1]?.date,
-        endDate: txs[0]?.date,
-      };
-      onImportSuccess(txs, summary);
-      onClose();
     }
   };
 
@@ -170,17 +152,6 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
             Colar Texto
           </button>
 
-          <button
-            onClick={() => { setActiveUploadTab('samples'); setErrorMessage(null); }}
-            className={`pb-2.5 px-3 border-b-2 transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
-              activeUploadTab === 'samples'
-                ? 'border-indigo-600 text-indigo-600 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            <Zap className="w-4 h-4 text-amber-500" />
-            Extratos Prontos
-          </button>
         </div>
 
         {/* Modal Body */}
@@ -306,38 +277,6 @@ export const StatementUploader: React.FC<StatementUploaderProps> = ({
                 </form>
               )}
 
-              {/* TAB 3: Extratos Prontos (Samples) */}
-              {activeUploadTab === 'samples' && (
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-500">
-                    Teste o aplicativo instantaneamente com extratos reais pré-carregados:
-                  </p>
-                  <div className="grid grid-cols-1 gap-2.5">
-                    {SAMPLE_STATEMENTS.map((sample) => (
-                      <button
-                        key={sample.id}
-                        onClick={() => handleSelectSample(sample.id)}
-                        className="text-left p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-indigo-300 transition group flex items-center justify-between shadow-2xs cursor-pointer"
-                      >
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-slate-900 group-hover:text-indigo-600 transition">
-                              {sample.name}
-                            </span>
-                            <span className="px-2 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-200 text-slate-700">
-                              {sample.bank}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500">{sample.description}</p>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:bg-indigo-600 group-hover:text-white text-slate-500 transition flex-shrink-0 ml-3 shadow-2xs">
-                          <ArrowRight className="w-4 h-4" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>

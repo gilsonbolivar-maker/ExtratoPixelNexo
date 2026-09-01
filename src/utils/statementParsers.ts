@@ -233,9 +233,9 @@ export function parseCSVContent(csvText: string, customBankName?: string): { tra
     }
   }
 
-  // Fallback defaults if no header found
+  // Sem cabeçalho reconhecido: assume data / descrição / valor e lê desde a
+  // primeira linha (headerIndex fica em -1, então o laço começa no índice 0).
   if (headerIndex === -1) {
-    headerIndex = 0;
     dateCol = 0;
     descCol = 1;
     amountCol = 2;
@@ -307,73 +307,3 @@ export function parseCSVContent(csvText: string, customBankName?: string): { tra
     },
   };
 }
-
-/**
- * Sample / Mock statements for testing instantly
- */
-export const SAMPLE_STATEMENTS: { id: string; name: string; bank: string; description: string; getTransactions: () => Transaction[] }[] = [
-  {
-    id: 'nubank_month',
-    name: 'Nubank - Extrato Mensal Completo',
-    bank: 'Nubank',
-    description: 'Extrato real com salário, compras em mercado, iFood, Uber, Netflix, aluguel e PIX variados.',
-    getTransactions: () => [
-      { id: 'nb-1', date: '2026-08-05', description: 'Salário Empresa Tech SA', amount: 6850.00, type: 'income', category: 'renda', paymentMethod: 'ted_doc', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-2', date: '2026-08-06', description: 'Transferência PIX Aluguel + Condomínio', amount: -2100.00, type: 'expense', category: 'moradia', paymentMethod: 'pix', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-3', date: '2026-08-06', description: 'Enel Distribuição Energia', amount: -185.40, type: 'expense', category: 'moradia', paymentMethod: 'debito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-4', date: '2026-08-07', description: 'Comgás Gás Natural', amount: -62.30, type: 'expense', category: 'moradia', paymentMethod: 'debito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-5', date: '2026-08-08', description: 'Supermercado Pão de Açúcar', amount: -489.90, type: 'expense', category: 'alimentacao', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-6', date: '2026-08-09', description: 'Uber *Ride 10492 São Paulo', amount: -28.90, type: 'expense', category: 'transporte', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-7', date: '2026-08-10', description: 'iFood *Restaurante Japonês', amount: -112.50, type: 'expense', category: 'alimentacao', paymentMethod: 'pix', bankName: 'Nubank' },
-      { id: 'nb-8', date: '2026-08-11', description: 'Drogasil Medicamentos e Vitaminas', amount: -145.80, type: 'expense', category: 'saude', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-9', date: '2026-08-12', description: 'Netflix Assinatura Mensal', amount: -55.90, type: 'expense', category: 'assinaturas', paymentMethod: 'credito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-10', date: '2026-08-12', description: 'Spotify Premium Family', amount: -34.90, type: 'expense', category: 'assinaturas', paymentMethod: 'credito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-11', date: '2026-08-13', description: 'Posto Shell Combustível Gasolina', amount: -220.00, type: 'expense', category: 'transporte', paymentMethod: 'debito', bankName: 'Nubank' },
-      { id: 'nb-12', date: '2026-08-14', description: 'Smart Fit Mensalidade Academia', amount: -129.90, type: 'expense', category: 'assinaturas', paymentMethod: 'credito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-13', date: '2026-08-15', description: 'Rendimento NuConta Automático', amount: 48.75, type: 'income', category: 'renda', paymentMethod: 'ted_doc', bankName: 'Nubank' },
-      { id: 'nb-14', date: '2026-08-16', description: 'Amazon.com.br Livros e Cabos', amount: -189.00, type: 'expense', category: 'compras', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-15', date: '2026-08-17', description: 'iFood *Hamburgueria Artesanal', amount: -86.00, type: 'expense', category: 'alimentacao', paymentMethod: 'pix', bankName: 'Nubank' },
-      { id: 'nb-16', date: '2026-08-18', description: 'Sem Parar Pedágios Rodovia', amount: -64.80, type: 'expense', category: 'transporte', paymentMethod: 'debito', bankName: 'Nubank' },
-      { id: 'nb-17', date: '2026-08-20', description: 'Cinemark Cinema + Pipoca', amount: -94.00, type: 'expense', category: 'lazer', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-18', date: '2026-08-22', description: 'Supermercado Carrefour Express', amount: -245.30, type: 'expense', category: 'alimentacao', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-19', date: '2026-08-24', description: 'Curso Online Alura Dev', amount: -95.00, type: 'expense', category: 'educacao', paymentMethod: 'credito', bankName: 'Nubank', isRecurring: true },
-      { id: 'nb-20', date: '2026-08-26', description: 'Uber *Ride Retorno', amount: -34.50, type: 'expense', category: 'transporte', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-21', date: '2026-08-28', description: 'Restaurante Outback Steakhouse', amount: -210.00, type: 'expense', category: 'alimentacao', paymentMethod: 'credito', bankName: 'Nubank' },
-      { id: 'nb-22', date: '2026-08-29', description: 'PIX Freelance Design Web', amount: 1200.00, type: 'income', category: 'renda', paymentMethod: 'pix', bankName: 'Nubank' },
-      { id: 'nb-23', date: '2026-08-30', description: 'Tarifa IOF Internacional', amount: -14.20, type: 'expense', category: 'financeiro', paymentMethod: 'credito', bankName: 'Nubank' },
-    ],
-  },
-  {
-    id: 'c6_corrente',
-    name: 'C6 Bank - Conta Corrente & Cartão Carbon',
-    bank: 'C6 Bank',
-    description: 'Extrato real com salário via portabilidade, compras C6 Carbon, C6 Tag de pedágio, boletos e rendimento CDB.',
-    getTransactions: () => [
-      { id: 'c6-1', date: '2026-08-01', description: 'TED PORTABILIDADE SALARIO EMPRESA SA', amount: 8200.00, type: 'income', category: 'renda', paymentMethod: 'ted_doc', bankName: 'C6 Bank', isRecurring: true },
-      { id: 'c6-2', date: '2026-08-02', description: 'PAG BOLETO CONDOMINIO RESIDENCIAL', amount: -1450.00, type: 'expense', category: 'moradia', paymentMethod: 'boleto', bankName: 'C6 Bank', isRecurring: true },
-      { id: 'c6-3', date: '2026-08-05', description: 'PAG BOLETO MENSALIDADE POS GRADUACAO', amount: -980.00, type: 'expense', category: 'educacao', paymentMethod: 'boleto', bankName: 'C6 Bank', isRecurring: true },
-      { id: 'c6-4', date: '2026-08-05', description: 'DEB SULAMERICA SAUDE CONVENIO', amount: -650.00, type: 'expense', category: 'saude', paymentMethod: 'debito', bankName: 'C6 Bank', isRecurring: true },
-      { id: 'c6-5', date: '2026-08-08', description: 'COMPRA C6 CARBON ASSAI ATACADISTA', amount: -780.40, type: 'expense', category: 'alimentacao', paymentMethod: 'credito', bankName: 'C6 Bank' },
-      { id: 'c6-6', date: '2026-08-10', description: 'PIX ENVIADO AUTO MECANICA CARVALHO', amount: -450.00, type: 'expense', category: 'transporte', paymentMethod: 'pix', bankName: 'C6 Bank' },
-      { id: 'c6-7', date: '2026-08-12', description: 'DEB AUTOMATICO C6 TAG PEDAGIO VELOX', amount: -68.50, type: 'expense', category: 'transporte', paymentMethod: 'debito', bankName: 'C6 Bank' },
-      { id: 'c6-8', date: '2026-08-18', description: 'PAGAMENTO FATURA CARTAO C6 BLACK', amount: -1850.00, type: 'expense', category: 'compras', paymentMethod: 'boleto', bankName: 'C6 Bank' },
-      { id: 'c6-9', date: '2026-08-25', description: 'RESGATE RENDIMENTO CDB C6 POS FIXADO', amount: 1500.00, type: 'income', category: 'renda', paymentMethod: 'ted_doc', bankName: 'C6 Bank' },
-    ],
-  },
-  {
-    id: 'inter_cartao',
-    name: 'Banco Inter - Fatura de Cartão de Crédito',
-    bank: 'Banco Inter',
-    description: 'Fatura detalhada com compras parceladas, lazer, assinaturas digitais e viagens.',
-    getTransactions: () => [
-      { id: 'int-1', date: '2026-08-02', description: 'APPLE.COM/BILL SERVICOS', amount: -29.90, type: 'expense', category: 'assinaturas', paymentMethod: 'credito', bankName: 'Banco Inter', isRecurring: true },
-      { id: 'int-2', date: '2026-08-04', description: 'AIRBNB HOSPEDAGEM FERIADO', amount: -840.00, type: 'expense', category: 'lazer', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-3', date: '2026-08-06', description: 'ZARA SHOPPING ROUPAS TRABALHO', amount: -390.00, type: 'expense', category: 'compras', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-4', date: '2026-08-10', description: 'RESTAURANTE COCO BAMBU JANTAR', amount: -320.00, type: 'expense', category: 'alimentacao', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-5', date: '2026-08-14', description: 'MERCADOLIVRE ELETRONICOS', amount: -249.90, type: 'expense', category: 'compras', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-6', date: '2026-08-18', description: 'POSTO IPIRANGA ABASTECIMENTO', amount: -195.00, type: 'expense', category: 'transporte', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-7', date: '2026-08-25', description: 'DROGA RAIA COSMETICOS E REMEDIOS', amount: -88.70, type: 'expense', category: 'saude', paymentMethod: 'credito', bankName: 'Banco Inter' },
-      { id: 'int-8', date: '2026-08-28', description: 'CASHBACK INTER SHOP RECEBIDO', amount: 35.40, type: 'income', category: 'renda', paymentMethod: 'ted_doc', bankName: 'Banco Inter' },
-    ],
-  },
-];

@@ -7,11 +7,16 @@ import { BudgetPlanner } from './components/BudgetPlanner';
 import { StatementUploader } from './components/StatementUploader';
 import { AddTransactionModal } from './components/AddTransactionModal';
 import { PixelNexoFooter } from './components/PixelNexoFooter';
-import { Transaction, StatementSummary, Budget, CategoryKey } from './types';
-import { SAMPLE_STATEMENTS } from './utils/statementParsers';
+import { Transaction, StatementSummary, BankAccount, Budget, CategoryKey } from './types';
 import { formatCurrency } from './utils/formatters';
 import { usePrivacy } from './context/PrivacyContext';
-import { UploadCloud, Sparkles, Plus, CheckCircle2, ArrowRight } from 'lucide-react';
+import { UploadCloud, Plus, CheckCircle2, ArrowRight } from 'lucide-react';
+
+const SEM_BANCO = 'Sem banco';
+
+/** Chave usada para não importar duas vezes o mesmo lançamento. */
+const transactionKey = (t: Transaction) =>
+  `${t.bankName || SEM_BANCO}|${t.date}|${t.amount}|${(t.description || '').trim().toLowerCase()}`;
 
 const DEFAULT_BUDGETS: Budget[] = [
   { category: 'moradia', limit: 2500 },
@@ -48,9 +53,11 @@ export default function App() {
         console.error('Failed to parse saved transactions');
       }
     }
-    // Default initial sample
-    return SAMPLE_STATEMENTS[0].getTransactions();
+    return [];
   });
+
+  // null = consolidado da pessoa (todos os bancos juntos)
+  const [selectedBank, setSelectedBank] = useState<string | null>(null);
 
   const [summary, setSummary] = useState<StatementSummary | null>(() => {
     const saved = localStorage.getItem('extratowise_summary');
@@ -61,12 +68,7 @@ export default function App() {
         console.error('Failed to parse saved summary');
       }
     }
-    return {
-      bankName: 'Nubank (Exemplo)',
-      currency: 'BRL',
-      startDate: '2026-08-05',
-      endDate: '2026-08-30',
-    };
+    return null;
   });
 
   const [budgets, setBudgets] = useState<Budget[]>(() => {
@@ -94,32 +96,64 @@ export default function App() {
     localStorage.setItem('extratowise_budgets', JSON.stringify(budgets));
   }, [budgets]);
 
+  // Bancos presentes nos lançamentos, com a contagem de cada um
+  const banks: BankAccount[] = React.useMemo(() => {
+    const counts = new Map<string, number>();
+    transactions.forEach((t) => {
+      const name = t.bankName?.trim() || SEM_BANCO;
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+    });
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+  }, [transactions]);
+
+  // Se o banco selecionado sumir (foi removido), volta ao consolidado
+  useEffect(() => {
+    if (selectedBank && !banks.some((b) => b.name === selectedBank)) {
+      setSelectedBank(null);
+    }
+  }, [banks, selectedBank]);
+
+  // O que as telas mostram: um banco só, ou o consolidado da pessoa
+  const visibleTransactions = React.useMemo(
+    () =>
+      selectedBank
+        ? transactions.filter((t) => (t.bankName?.trim() || SEM_BANCO) === selectedBank)
+        : transactions,
+    [transactions, selectedBank]
+  );
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 4000);
   };
 
   // Handlers
+  // Importar soma ao que já existe, para a pessoa acumular vários bancos
   const handleImportSuccess = (newTransactions: Transaction[], newSummary: StatementSummary) => {
-    setTransactions(newTransactions);
-    setSummary(newSummary);
-    showToast(`Sucesso! ${newTransactions.length} lançamentos importados de "${newSummary.bankName || 'Extrato'}".`);
-  };
+    const bankName = newSummary.bankName?.trim() || SEM_BANCO;
+    const stamped = newTransactions.map((t) => ({
+      ...t,
+      bankName: t.bankName?.trim() || bankName,
+    }));
 
-  const handleLoadSample = (sampleId: string) => {
-    const sample = SAMPLE_STATEMENTS.find((s) => s.id === sampleId);
-    if (sample) {
-      const txs = sample.getTransactions();
-      const newSummary: StatementSummary = {
-        bankName: `${sample.bank} (Exemplo)`,
-        currency: 'BRL',
-        startDate: txs[txs.length - 1]?.date,
-        endDate: txs[0]?.date,
-      };
-      setTransactions(txs);
-      setSummary(newSummary);
-      showToast(`Extrato exemplo "${sample.name}" carregado.`);
-    }
+    setTransactions((prev) => {
+      const seen = new Set(prev.map(transactionKey));
+      const added = stamped.filter((t) => !seen.has(transactionKey(t)));
+      const duplicates = stamped.length - added.length;
+
+      const merged = [...prev, ...added].sort((a, b) => b.date.localeCompare(a.date));
+      showToast(
+        duplicates > 0
+          ? `${added.length} lançamentos de "${bankName}" importados (${duplicates} já existiam).`
+          : `${added.length} lançamentos de "${bankName}" importados.`
+      );
+      return merged;
+    });
+
+    setSummary(newSummary);
+    setSelectedBank(null);
   };
 
   const handleUpdateCategory = (id: string, newCategory: CategoryKey) => {
@@ -139,8 +173,8 @@ export default function App() {
       ...newTx,
       id: `manual-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     };
-    setTransactions((prev) => [tx, ...prev]);
-    showToast('Lançamento adicionado ao extrato.');
+    setTransactions((prev) => [tx, ...prev].sort((a, b) => b.date.localeCompare(a.date)));
+    showToast(`Lançamento adicionado em "${tx.bankName || SEM_BANCO}".`);
   };
 
   const handleUpdateBudget = (category: CategoryKey, limit: number) => {
@@ -150,10 +184,18 @@ export default function App() {
     showToast('Teto orçamentário atualizado.');
   };
 
+  const handleClearBank = (bank: string) => {
+    if (!window.confirm(`Remover todos os lançamentos de "${bank}"?`)) return;
+    setTransactions((prev) => prev.filter((t) => (t.bankName?.trim() || SEM_BANCO) !== bank));
+    setSelectedBank(null);
+    showToast(`Lançamentos de "${bank}" removidos.`);
+  };
+
   const handleResetData = () => {
     if (window.confirm('Deseja realmente limpar todos os dados do extrato?')) {
       setTransactions([]);
       setSummary(null);
+      setSelectedBank(null);
       localStorage.removeItem('extratowise_transactions');
       localStorage.removeItem('extratowise_summary');
       showToast('Dados limpos.');
@@ -179,11 +221,13 @@ export default function App() {
     <div className="min-h-screen bg-[var(--bg-page)] text-slate-900 flex flex-col antialiased transition-colors duration-200">
       {/* App Header */}
       <Header
-        summary={summary}
-        transactionCount={transactions.length}
+        banks={banks}
+        selectedBank={selectedBank}
+        onSelectBank={setSelectedBank}
+        transactionCount={visibleTransactions.length}
         onOpenUpload={() => setIsUploadOpen(true)}
-        onLoadSample={handleLoadSample}
         onOpenAddModal={() => setIsAddModalOpen(true)}
+        onClearBank={handleClearBank}
         onReset={handleResetData}
         onExportJSON={handleExportJSON}
         activeTab={activeTab}
@@ -225,24 +269,28 @@ export default function App() {
               </button>
 
               <button
-                onClick={() => handleLoadSample('nubank_month')}
+                onClick={() => setIsAddModalOpen(true)}
                 className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-2xs cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-indigo-600" />
-                <span>Carregar Extrato Demo</span>
+                <Plus className="w-4 h-4 text-indigo-600" />
+                <span>Lançar à Mão</span>
               </button>
             </div>
+
+            <p className="text-[11px] text-slate-400">
+              Importe de quantos bancos quiser — eles se somam no seu consolidado.
+            </p>
           </div>
         ) : (
           <>
             {/* Top KPI Cards (Always visible on Dashboard and Budget) */}
-            <FinancialKPIs transactions={transactions} />
+            <FinancialKPIs transactions={visibleTransactions} />
 
             {/* Tab 1: Dashboard (Visão Geral & Gráficos) */}
             {activeTab === 'dashboard' && (
               <div className="space-y-5">
                 <ChartsAndAnalytics
-                  transactions={transactions}
+                  transactions={visibleTransactions}
                   onFilterByCategory={handleFilterByCategoryFromChart}
                 />
 
@@ -254,12 +302,12 @@ export default function App() {
                       onClick={() => setActiveTab('transactions')}
                       className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition flex items-center gap-1 cursor-pointer"
                     >
-                      <span>Ver todos ({transactions.length})</span>
+                      <span>Ver todos ({visibleTransactions.length})</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                   <div className="space-y-1.5">
-                    {transactions.slice(0, 5).map((t) => (
+                    {visibleTransactions.slice(0, 5).map((t) => (
                       <div
                         key={t.id}
                         className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 text-xs transition"
@@ -286,7 +334,7 @@ export default function App() {
             {/* Tab 2: Detailed Transactions List */}
             {activeTab === 'transactions' && (
               <TransactionTable
-                transactions={transactions}
+                transactions={visibleTransactions}
                 onUpdateCategory={handleUpdateCategory}
                 onDeleteTransaction={handleDeleteTransaction}
                 onOpenAddModal={() => setIsAddModalOpen(true)}
@@ -297,7 +345,7 @@ export default function App() {
             {/* Tab 3: Budget & Planning */}
             {activeTab === 'budget' && (
               <BudgetPlanner
-                transactions={transactions}
+                transactions={visibleTransactions}
                 budgets={budgets}
                 onUpdateBudget={handleUpdateBudget}
               />
@@ -318,6 +366,8 @@ export default function App() {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAddTransaction={handleAddTransaction}
+        banks={banks}
+        defaultBank={selectedBank}
       />
 
       {/* Subtle Footer */}

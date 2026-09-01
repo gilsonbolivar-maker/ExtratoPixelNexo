@@ -1,15 +1,17 @@
-import React from 'react';
-import { Wallet, UploadCloud, ShieldCheck, RefreshCw, Download, Plus, FileText, CheckCircle2, ChevronDown, Eye, EyeOff } from 'lucide-react';
-import { StatementSummary } from '../types';
+import React, { useEffect, useRef, useState } from 'react';
+import { Wallet, UploadCloud, ShieldCheck, Trash2, Download, Plus, FileText, CheckCircle2, ChevronDown, Eye, EyeOff, MoreVertical, Landmark, User } from 'lucide-react';
+import { BankAccount } from '../types';
 import { usePrivacy } from '../context/PrivacyContext';
 import { ThemeSelector } from './ThemeSelector';
 
 interface HeaderProps {
-  summary: StatementSummary | null;
+  banks: BankAccount[];
+  selectedBank: string | null;
+  onSelectBank: (bank: string | null) => void;
   transactionCount: number;
   onOpenUpload: () => void;
-  onLoadSample: (sampleId: string) => void;
   onOpenAddModal: () => void;
+  onClearBank: (bank: string) => void;
   onReset: () => void;
   onExportJSON: () => void;
   activeTab: 'dashboard' | 'transactions' | 'budget';
@@ -17,17 +19,36 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  summary,
+  banks,
+  selectedBank,
+  onSelectBank,
   transactionCount,
   onOpenUpload,
-  onLoadSample,
   onOpenAddModal,
+  onClearBank,
   onReset,
   onExportJSON,
   activeTab,
   setActiveTab,
 }) => {
   const { hideValues, toggleHideValues } = usePrivacy();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Fecha o menu ao clicar fora
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const onClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [isMenuOpen]);
+
+  const scopeLabel = selectedBank ?? 'Meu consolidado';
+  const totalCount = banks.reduce((sum, bank) => sum + bank.count, 0);
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
@@ -49,10 +70,10 @@ export const Header: React.FC<HeaderProps> = ({
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium uppercase tracking-wider truncate">
-                {summary?.bankName ? (
+                {transactionCount > 0 ? (
                   <span className="text-slate-600 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-emerald-500 rounded-full inline-block flex-shrink-0"></span>
-                    <span className="truncate">{summary.bankName} • {transactionCount} lançamentos</span>
+                    <span className="truncate">{scopeLabel} • {transactionCount} lançamentos</span>
                   </span>
                 ) : (
                   'Análise de Extrato Bancário'
@@ -63,52 +84,31 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons & Quick Sample Controls */}
           <div className="flex items-center space-x-1.5 sm:space-x-2.5 flex-shrink-0">
-            {/* Quick Demo Selector for Desktop */}
-            <div className="hidden lg:flex items-center space-x-1.5 bg-slate-50 p-1 rounded-lg border border-slate-200 text-xs">
-              <span className="text-slate-400 px-2 font-bold text-[10px] uppercase tracking-wider">Exemplos:</span>
-              <button
-                id="btn-sample-nubank"
-                onClick={() => onLoadSample('nubank_month')}
-                className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-medium border border-slate-200 shadow-2xs transition cursor-pointer"
-              >
-                Nubank
-              </button>
-              <button
-                id="btn-sample-c6"
-                onClick={() => onLoadSample('c6_corrente')}
-                className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-medium border border-slate-200 shadow-2xs transition cursor-pointer"
-              >
-                C6 Bank
-              </button>
-              <button
-                id="btn-sample-inter"
-                onClick={() => onLoadSample('inter_cartao')}
-                className="px-2.5 py-1 rounded bg-white hover:bg-slate-100 text-slate-700 font-medium border border-slate-200 shadow-2xs transition cursor-pointer"
-              >
-                Inter
-              </button>
-            </div>
-
-            {/* Mobile / Tablet Quick Sample Select */}
-            <div className="lg:hidden">
-              <select
-                id="select-sample-mobile"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    onLoadSample(e.target.value);
-                    e.target.value = '';
-                  }
-                }}
-                defaultValue=""
-                className="text-xs bg-white text-slate-700 border border-slate-200 rounded-lg px-2 py-1.5 font-medium focus:outline-none focus:border-indigo-500 shadow-xs cursor-pointer"
-                title="Carregar exemplo de extrato"
-              >
-                <option value="" disabled>Exemplos ▾</option>
-                <option value="nubank_month">Nubank</option>
-                <option value="c6_corrente">C6 Bank</option>
-                <option value="inter_cartao">Banco Inter</option>
-              </select>
-            </div>
+            {/* Seletor de conta: consolidado da pessoa ou um banco especifico */}
+            {banks.length > 0 && (
+              <div className="relative">
+                <select
+                  id="select-bank-scope"
+                  value={selectedBank ?? ''}
+                  onChange={(event) => onSelectBank(event.target.value || null)}
+                  title="Escolher entre o consolidado pessoal e cada banco"
+                  className="appearance-none max-w-[9.5rem] sm:max-w-none text-xs bg-white text-slate-700 border border-slate-200 rounded-lg pl-7 pr-6 py-1.5 font-semibold focus:outline-none focus:border-indigo-500 shadow-xs cursor-pointer min-h-[34px] truncate"
+                >
+                  <option value="">Meu consolidado ({totalCount})</option>
+                  {banks.map((bank) => (
+                    <option key={bank.name} value={bank.name}>
+                      {bank.name} ({bank.count})
+                    </option>
+                  ))}
+                </select>
+                {selectedBank ? (
+                  <Landmark className="w-3.5 h-3.5 text-indigo-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-indigo-600 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                )}
+                <ChevronDown className="w-3 h-3 text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
 
             {/* Theme Selector Dropdown */}
             <ThemeSelector />
@@ -157,25 +157,57 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="hidden sm:inline">Extrato</span>
             </button>
 
-            {/* Export / Reset */}
+            {/* Menu de dados: exportar e limpar */}
             {transactionCount > 0 && (
-              <div className="flex items-center space-x-1 pl-1 border-l border-slate-200">
+              <div className="relative" ref={menuRef}>
                 <button
-                  id="btn-export-data"
-                  onClick={onExportJSON}
-                  title="Exportar dados como JSON"
-                  className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 border border-transparent hover:border-slate-200 transition cursor-pointer min-h-[34px] min-w-[34px] flex items-center justify-center"
+                  id="btn-data-menu"
+                  onClick={() => setIsMenuOpen((open) => !open)}
+                  title="Exportar ou limpar dados"
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
+                  className="p-1.5 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 border border-slate-200 transition cursor-pointer min-h-[34px] min-w-[34px] flex items-center justify-center"
                 >
-                  <Download className="w-4 h-4" />
+                  <MoreVertical className="w-4 h-4" />
                 </button>
-                <button
-                  id="btn-reset-data"
-                  onClick={onReset}
-                  title="Limpar todos os dados"
-                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 border border-transparent hover:border-rose-100 transition cursor-pointer min-h-[34px] min-w-[34px] flex items-center justify-center"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                </button>
+
+                {isMenuOpen && (
+                  <div
+                    role="menu"
+                    className="absolute right-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-40 animate-fadeIn"
+                  >
+                    <button
+                      role="menuitem"
+                      onClick={() => { setIsMenuOpen(false); onExportJSON(); }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition flex items-center gap-2.5 cursor-pointer"
+                    >
+                      <Download className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                      Exportar backup (JSON)
+                    </button>
+
+                    {selectedBank && (
+                      <button
+                        role="menuitem"
+                        onClick={() => { setIsMenuOpen(false); onClearBank(selectedBank); }}
+                        className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-slate-700 hover:bg-rose-50 hover:text-rose-700 transition flex items-center gap-2.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <span className="truncate">Remover "{selectedBank}"</span>
+                      </button>
+                    )}
+
+                    <div className="border-t border-slate-100 my-1" />
+
+                    <button
+                      role="menuitem"
+                      onClick={() => { setIsMenuOpen(false); onReset(); }}
+                      className="w-full text-left px-3.5 py-2.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 transition flex items-center gap-2.5 cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 flex-shrink-0" />
+                      Limpar todos os dados
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

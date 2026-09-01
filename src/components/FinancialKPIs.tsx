@@ -3,12 +3,15 @@ import { ArrowDownLeft, ArrowUpRight, Wallet, PiggyBank, Flame, TrendingDown, Tr
 import { Transaction, CategoryKey } from '../types';
 import { CATEGORIES } from '../utils/categories';
 import { formatCurrency, formatPercent } from '../utils/formatters';
+import { usePrivacy } from '../context/PrivacyContext';
 
 interface FinancialKPIsProps {
   transactions: Transaction[];
 }
 
 export const FinancialKPIs: React.FC<FinancialKPIsProps> = ({ transactions }) => {
+  const { hideValues } = usePrivacy();
+
   const totalIncome = transactions
     .filter((t) => t.amount > 0)
     .reduce((sum, t) => sum + t.amount, 0);
@@ -58,7 +61,7 @@ export const FinancialKPIs: React.FC<FinancialKPIsProps> = ({ transactions }) =>
         </div>
         <div className="mt-2">
           <p className="text-xl sm:text-2xl font-bold text-emerald-600 tracking-tight">
-            {formatCurrency(totalIncome)}
+            {formatCurrency(totalIncome, hideValues)}
           </p>
           <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
             <span className="text-emerald-600 font-semibold">{transactions.filter((t) => t.amount > 0).length}</span>{' '}
@@ -77,10 +80,10 @@ export const FinancialKPIs: React.FC<FinancialKPIsProps> = ({ transactions }) =>
         </div>
         <div className="mt-2">
           <p className="text-xl sm:text-2xl font-bold text-rose-600 tracking-tight">
-            - {formatCurrency(totalExpense)}
+            - {formatCurrency(totalExpense, hideValues)}
           </p>
           <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-            <span className="text-rose-600 font-semibold">Média: {formatCurrency(dailyAverageExpense)}/dia</span>
+            <span className="text-rose-600 font-semibold">Média: {formatCurrency(dailyAverageExpense, hideValues)}/dia</span>
           </p>
         </div>
       </div>
@@ -105,7 +108,7 @@ export const FinancialKPIs: React.FC<FinancialKPIsProps> = ({ transactions }) =>
               netBalance >= 0 ? 'text-slate-900' : 'text-amber-600'
             }`}
           >
-            {formatCurrency(netBalance)}
+            {formatCurrency(netBalance, hideValues)}
           </p>
           <div className="flex items-center gap-1.5 mt-1">
             {netBalance >= 0 ? (
